@@ -11,11 +11,13 @@ import (
 	"io"
 	"os/exec"
 	"strconv"
+	"sync"
 )
 
 // IPSet represents a ipset cmd executor.
 type IPSet struct {
 	Path string
+	mu   sync.Mutex
 }
 
 // New creates a new IPSet.
@@ -25,7 +27,7 @@ func New() (*IPSet, error) {
 		return nil, err
 	}
 
-	return &IPSet{binPath}, nil
+	return &IPSet{Path: binPath}, nil
 }
 
 // Create creates a new ipset with a given name and type.
@@ -197,6 +199,9 @@ func (set *IPSet) Refresh(name string, entries ...string) error {
 
 	tempname := name + "-swptemp"
 	var err error
+
+	set.mu.Lock()
+	defer set.mu.Unlock()
 
 	s, err := set.List(name, true)
 	if err != nil {
